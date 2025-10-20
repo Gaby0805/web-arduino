@@ -4,7 +4,8 @@ import Cookies from "js-cookie";
 import { toast } from "sonner";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: "https://arduino-rirau-ipyra.onrender.com",
+  withCredentials: true,
 });
 
 api.interceptors.request.use((config) => {
