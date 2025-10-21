@@ -7,7 +7,7 @@ const api = axios.create({
   baseURL: "https://arduino-rirau-ipyra.onrender.com",
   withCredentials: true,
 });
-
+// teste
 api.interceptors.request.use((config) => {
   const token = Cookies.get("access_token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
