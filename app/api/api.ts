@@ -19,7 +19,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       toast.error("Sessão expirada. Faça login novamente.");
-      Cookies.remove("access_token");
+      Cookies.remove("token");
       window.location.href = "/";
     }
     return Promise.reject(error);
