@@ -177,6 +177,7 @@ export default function Dashboard() {
             <tr className="bg-[#2C2C2C] text-gray-300">
               <th className="py-2 px-3 text-left">Nome</th>
               <th className="py-2 px-3 text-left">Horário</th>
+              <th className="py-2 px-3 text-left">dia semana</th>
               <th className="py-2 px-3 text-left">Ativo</th>
               <th className="py-2 px-3 text-left">Ações</th>
             </tr>
@@ -186,7 +187,15 @@ export default function Dashboard() {
               <tr key={alarm.id} className="border-t border-gray-700">
                 <td className="py-2 px-3">{alarm.nome}</td>
                 <td className="py-2 px-3">{alarm.horario}</td>
-                <td className="py-2 px-3">
+<td className="py-2 px-3">
+  {alarm.dia.length > 0
+    ? alarm.dia
+        .map((d) =>
+          ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'][d]
+        )
+        .join(', ')
+    : '—'}
+</td>                <td className="py-2 px-3">
                   <input
                     type="checkbox"
                     checked={alarm.ativo}
@@ -239,13 +248,13 @@ export default function Dashboard() {
           onChange={(e) => setDayOfWeek(e.target.value)}
           className="bg-[#2C2C2C] text-white rounded-md p-2 mb-4 w-full outline-none"
         >
-          <option value="1">Segunda-feira</option>
-          <option value="2">Terça-feira</option>
-          <option value="3">Quarta-feira</option>
-          <option value="4">Quinta-feira</option>
-          <option value="5">Sexta-feira</option>
-          <option value="6">Sábado</option>
-          <option value="0">Domingo</option>
+          <option value="0">Segunda-feira</option>
+          <option value="1">Terça-feira</option>
+          <option value="2">Quarta-feira</option>
+          <option value="3">Quinta-feira</option>
+          <option value="4">Sexta-feira</option>
+          <option value="5">Sábado</option>
+          <option value="6">Domingo</option>
         </select>
         <Button
         onClick={handleCreateAlarmAdvanced}
