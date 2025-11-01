@@ -7,7 +7,6 @@ import { updateStatus, deleteAlarm } from '../api/func/alarm'
 import api from '../api/api'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import axios from 'axios'
 
 type AlarmApi = {
   id: number
@@ -31,11 +30,11 @@ export default function Dashboard() {
   const [nome, setNome] = useState('')
   const [horario, setHorario] = useState('')
 
-  // ThirdArea states
+  // Criar alarme avançado
   const [name, setName] = useState('')
   const [time, setTime] = useState('')
   const [alarmActive, setAlarmActive] = useState('true')
-  const [dayOfWeek, setDayOfWeek] = useState('1')
+  const [dayOfWeek, setDayOfWeek] = useState<string[]>([]) // ← agora é array
 
   // Buscar alarmes do banco
   const fetchAlarms = async () => {
@@ -59,54 +58,30 @@ export default function Dashboard() {
     fetchAlarms()
   }, [])
 
-  // Criar alarme simples
-  const criarAlarme = async () => {
-    if (!nome || !horario) return toast('Preencha todos os campos!')
-    try {
-      const { data } = await api.post<AlarmApi>('/alarms', {
-        label: nome,
-        time: horario,
-        is_active: true,
-        days: [],
-      })
-      // Atualiza o estado apenas com o que vem do banco
-      setAlarms((prev) => [
-        ...prev,
-        {
-          id: data.id,
-          nome: data.label,
-          horario: data.time.slice(0, 5),
-          ativo: data.is_active,
-          dia: data.days ?? [],
-        },
-      ])
-      setNome('')
-      setHorario('')
-      toast('Alarme criado com sucesso!')
-    } catch (error) {
-      console.error('Erro ao criar alarme:', error)
-      toast('Erro ao criar alarme')
-    }
-  }
   const Activate = async () => {
     try {
-      await api.post('socket/disparar-alarme'), 
+      await api.post('socket/disparar-alarme')
       toast('Alarme ativado com sucesso!')
     } catch (error) {
       console.error('Erro ao ativar alarme:', error)
       toast('Erro ao ativar alarme')
-    } 
+    }
   }
-  // Criar alarme avançado
+
+  // Criar alarme avançado com múltiplos dias
   const handleCreateAlarmAdvanced = async () => {
+    if (!name || !time || dayOfWeek.length === 0)
+      return toast('Preencha todos os campos!')
+
     try {
       const payload = {
         label: name,
         time: time + ':00',
         is_active: alarmActive === 'true',
-        days: [parseInt(dayOfWeek)],
+        days: dayOfWeek.map((d) => parseInt(d)),
         user_id: 1,
       }
+
       const { data } = await api.post<AlarmApi>('/alarms', payload)
       setAlarms((prev) => [
         ...prev,
@@ -120,10 +95,11 @@ export default function Dashboard() {
       ])
       setName('')
       setTime('')
-      toast('Alarme avançado criado!')
+      setDayOfWeek([])
+      toast('Alarme criado com sucesso!')
     } catch (error) {
       console.error('Erro ao criar alarme:', error)
-      toast('Erro ao criar alarme avançado')
+      toast('Erro ao criar alarme')
     }
   }
 
@@ -142,7 +118,7 @@ export default function Dashboard() {
       toast('Erro ao atualizar status')
     }
   }
- 
+
   const handleDelete = async (id: number) => {
     try {
       await deleteAlarm(id)
@@ -165,7 +141,10 @@ export default function Dashboard() {
           height={100}
           className="object-contain"
         />
-        <button onClick={Activate} className="bg-[#0E4194] text-white px-10 py-3 rounded-lg mt-8 hover:bg-[#0B306C] transition-transform hover:scale-105">
+        <button
+          onClick={Activate}
+          className="bg-[#0E4194] text-white px-10 py-3 rounded-lg mt-8 hover:bg-[#0B306C] transition-transform hover:scale-105"
+        >
           Ativar
         </button>
       </div>
@@ -177,7 +156,7 @@ export default function Dashboard() {
             <tr className="bg-[#2C2C2C] text-gray-300">
               <th className="py-2 px-3 text-left">Nome</th>
               <th className="py-2 px-3 text-left">Horário</th>
-              <th className="py-2 px-3 text-left">dia semana</th>
+              <th className="py-2 px-3 text-left">Dia da semana</th>
               <th className="py-2 px-3 text-left">Ativo</th>
               <th className="py-2 px-3 text-left">Ações</th>
             </tr>
@@ -187,15 +166,25 @@ export default function Dashboard() {
               <tr key={alarm.id} className="border-t border-gray-700">
                 <td className="py-2 px-3">{alarm.nome}</td>
                 <td className="py-2 px-3">{alarm.horario}</td>
-<td className="py-2 px-3">
-  {alarm.dia.length > 0
-    ? alarm.dia
-        .map((d) =>
-          ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'][d]
-        )
-        .join(', ')
-    : '—'}
-</td>                <td className="py-2 px-3">
+                <td className="py-2 px-3">
+                  {alarm.dia.length > 0
+                    ? alarm.dia
+                        .map(
+                          (d) =>
+                            [
+                              'Segunda',
+                              'Terça',
+                              'Quarta',
+                              'Quinta',
+                              'Sexta',
+                              'Sábado',
+                              'Domingo',
+                            ][d]
+                        )
+                        .join(', ')
+                    : '—'}
+                </td>
+                <td className="py-2 px-3">
                   <input
                     type="checkbox"
                     checked={alarm.ativo}
@@ -218,9 +207,8 @@ export default function Dashboard() {
 
       {/* Criar alarmes simples e avançados */}
       <div className="flex flex-col justify-center w-full md:w-1/3 bg-[#1E1E1E] p-6 rounded-xl shadow-md mt-6 md:mt-0">
+        <h2 className="text-lg font-semibold mb-4">Criar alarme</h2>
 
-
-        <h2 className="text-lg font-semibold mb-4">Criar alarme </h2>
         <input
           type="text"
           placeholder="Nome do horário"
@@ -235,6 +223,7 @@ export default function Dashboard() {
           onChange={(e) => setTime(e.target.value)}
           className="bg-[#2C2C2C] text-white rounded-md p-2 mb-3 w-full outline-none"
         />
+
         <select
           value={alarmActive}
           onChange={(e) => setAlarmActive(e.target.value)}
@@ -243,26 +232,41 @@ export default function Dashboard() {
           <option value="true">Ativado</option>
           <option value="false">Desativado</option>
         </select>
-        <select
-          value={dayOfWeek}
-          onChange={(e) => setDayOfWeek(e.target.value)}
-          className="bg-[#2C2C2C] text-white rounded-md p-2 mb-4 w-full outline-none"
-        >
-          <option value="0">Segunda-feira</option>
-          <option value="1">Terça-feira</option>
-          <option value="2">Quarta-feira</option>
-          <option value="3">Quinta-feira</option>
-          <option value="4">Sexta-feira</option>
-          <option value="5">Sábado</option>
-          <option value="6">Domingo</option>
-        </select>
-        <Button
-        onClick={handleCreateAlarmAdvanced}
-        
-        >
-            criar
-        </Button>
-    
+
+        {/* ✅ Checkboxes para vários dias da semana */}
+        <div className="mb-4">
+          <p className="mb-2 text-sm text-gray-300">Dias da semana:</p>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              'Segunda',
+              'Terça',
+              'Quarta',
+              'Quinta',
+              'Sexta',
+              'Sábado',
+              'Domingo',
+            ].map((dia, index) => (
+              <label key={index} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={dayOfWeek.includes(index.toString())}
+                  onChange={(e) => {
+                    setDayOfWeek((prev) => {
+                      if (e.target.checked) {
+                        return [...prev, index.toString()]
+                      } else {
+                        return prev.filter((d) => d !== index.toString())
+                      }
+                    })
+                  }}
+                />
+                {dia}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <Button onClick={handleCreateAlarmAdvanced}>Criar</Button>
       </div>
     </div>
   )
